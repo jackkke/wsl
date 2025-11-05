@@ -6,32 +6,31 @@ on:
     branches: [ main ]
 
 jobs:
-  test-wsl2:
+  test-wsl2-import:
     runs-on: windows-2025
 
     steps:
-      - name: Check Windows version
+      - name: Download Rocky rootfs
         run: |
-          echo "=== Windows Version ==="
-          systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
+          echo "Downloading Rocky rootfs..."
+          curl -L -o Rocky-10-WSL-Base-10.0-20250611.0.x86_64.wsl https://dl.rockylinux.org/pub/rocky/10/images/x86_64/Rocky-10-WSL-Base-10.0-20250611.0.x86_64.wsl
 
-      - name: Check WSL installation
+      - name: Import to WSL2
         run: |
-          echo "=== WSL Version Info ==="
-          wsl --version
+          echo "Importing Rocky to WSL2..."
+          mkdir rocky_base
+          wsl --install --from-file ./Rocky-10-WSL-Base-10.0-20250611.0.x86_64.wsl --no-launch
 
-      - name: List available distributions
-        run: |
-          echo "=== WSL Distros ==="
-          wsl --list --verbose
+      - name: List installed WSL distributions
+        run: wsl --list --verbose
 
-      - name: Try running Linux commands in WSL2
+      - name: Run test commands inside WSL2
         run: |
-          echo "=== Running Linux Command ==="
-          wsl uname -a
-          wsl cat /etc/os-release || echo "No default distro found"
-
-      - name: Check WSL2 kernel version
+          echo "Running uname and OS info in WSL2 Alpine..."
+          wsl -d rocky -- bash -c @"
+            cat /etc/wsl.conf
+          "@
+      - name: Cleanup
         run: |
-          echo "=== Kernel version (WSL2) ==="
-          wsl --exec uname -r || echo "Cannot run WSL2"
+          echo "Cleaning up..."
+          wsl --unregister AlpineTest
