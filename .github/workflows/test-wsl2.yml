@@ -1,0 +1,37 @@
+name: Test WSL2 on Windows 2025
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  test-wsl2:
+    runs-on: windows-2025
+
+    steps:
+      - name: Check Windows version
+        run: |
+          echo "=== Windows Version ==="
+          systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
+
+      - name: Check WSL installation
+        run: |
+          echo "=== WSL Version Info ==="
+          wsl --version
+
+      - name: List available distributions
+        run: |
+          echo "=== WSL Distros ==="
+          wsl --list --verbose
+
+      - name: Try running Linux commands in WSL2
+        run: |
+          echo "=== Running Linux Command ==="
+          wsl uname -a
+          wsl cat /etc/os-release || echo "No default distro found"
+
+      - name: Check WSL2 kernel version
+        run: |
+          echo "=== Kernel version (WSL2) ==="
+          wsl --exec uname -r || echo "Cannot run WSL2"
