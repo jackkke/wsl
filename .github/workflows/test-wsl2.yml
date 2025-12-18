@@ -29,6 +29,8 @@ jobs:
           echo "Running uname and OS info in WSL2 Alpine..."
           wsl -d rocky -- bash -c @"
             cat /etc/wsl.conf
+            ls -alh /mnt/c
+            ls -alh /mnt/d
           "@
       - name: Cleanup
         run: |
