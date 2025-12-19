@@ -22,9 +22,9 @@ jobs:
         run: |
           BUILDER_FILE="${WSL_FILE%.wsl}-Builder.wsl"
           cp "$WSL_FILE" "$BUILDER_FILE"
-          tar -xzf "$BUILDER_FILE"
+          tar -xzf "$BUILDER_FILE" -k
           sed -i "s/^read.*/username=zion/" usr/libexec/wsl/oobe.sh
-          tar --numeric-owner --format=posix -czf "$BUILDER_FILE" .
+          tar --numeric-owner --format=posix -czf "$BUILDER_FILE" -h .
           ls -alh
 
       - name: Import to WSL2 from wsl file
