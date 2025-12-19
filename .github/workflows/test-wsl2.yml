@@ -6,12 +6,13 @@ on:
     branches: [ main ]
 
 jobs:
-  test-wsl2-import:
+  Build_Custom_RockyWSL:
     runs-on: windows-2025
     env:
       WSL_FILE: Rocky-10-WSL-Base-10.1-20251116.0.x86_64.wsl
 
     steps:
+      - uses: actions/checkout@v4
       - name: Download Rocky Linux WSL
         shell: bash
         run: |
@@ -53,45 +54,102 @@ jobs:
             echo "📌 RockyLinux 主版本号: ${MAJOR_VERSION}"
 
             echo "📦 安装 EPEL 仓库..."
-            sudo rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-"${MAJOR_VERSION}".noarch.rpm >/dev/null
+            sudo rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-"${MAJOR_VERSION}".noarch.rpm
 
             echo "🔄 刷新 DNF 缓存..."
-            sudo dnf makecache >/dev/null
+            sudo dnf makecache
 
             echo "📂 切换到 RPM 存放目录: ${rpm_path}"
             cd "${rpm_path}"
             mkdir -p 01-update 02-base 03-epel 06-docker
 
             echo "⬇️ [1/6] 下载并更新系统 RPM 到 01-update..."
-            sudo dnf update -y --downloadonly --downloaddir=01-update >/dev/null
+            sudo dnf update -y --downloadonly --downloaddir=01-update
             echo "✅ 系统更新 RPM 下载完成"
 
             echo "📦 [2/6] 安装 01-update 中的 RPM..."
-            sudo dnf install -y --setopt=keepcache=1 01-update/*.rpm >/dev/null
+            sudo dnf install -y --setopt=keepcache=1 01-update/*.rpm
             echo "✅ 系统更新完成"
 
             echo "⬇️ [3/6] 下载基础工具 RPM 到 02-base..."
-            sudo dnf download -y --resolve --downloaddir=02-base ncurses net-tools wget xz vim nano telnet python3-pip sysstat iotop bc dos2unix >/dev/null
+            sudo dnf download -y --resolve --downloaddir=02-base ncurses net-tools wget xz vim nano telnet python3-pip sysstat iotop bc dos2unix
             echo "✅ 基础工具下载完成"
 
             echo "⬇️ [4/6] 下载 EPEL 软件包到 03-epel..."
-            sudo dnf download -y --resolve --downloaddir=03-epel epel-release ncdu htop fastfetch p7zip >/dev/null
+            sudo dnf download -y --resolve --downloaddir=03-epel epel-release ncdu htop fastfetch p7zip
             echo "✅ EPEL 软件包下载完成"
 
             echo "🛠 添加 Docker 官方仓库..."
-            sudo dnf config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo >/dev/null
+            sudo dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
 
             echo "📂 复制 docker-ce.repo 到 06-docker..."
             sudo cp -p /etc/yum.repos.d/docker-ce.repo 06-docker/
 
             echo "⬇️ [6/6] 下载 Docker 相关 RPM 到 06-docker..."
-            sudo dnf download -y --resolve --downloaddir=06-docker docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >/dev/null
+            sudo dnf download -y --resolve --downloaddir=06-docker docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
             echo "✅ Docker 相关下载完成"
 
             ls -alh
           WSL_EOF
 
+      - name: Build Customize WSL Image
+        shell: bash
+        run: |
+          wsl -d RockyBuilder -- bash -s <<'WSL_EOF'
+            echo "🖥️ 检测系统架构和版本..."
+            arch=$(uname -m)
+            MAJOR_VERSION=$(rpm -q --qf '%{VERSION}' rocky-release | cut -d '.' -f 1)
+
+            temp_path="temp_${RANDOM}"
+            wsl_name="Rocky-10-WSL-Base-10.1-20251116.0.x86_64.wsl"
+
+            echo "📦 安装依赖工具..."
+            dnf install -y xz
+
+            echo "🔧 处理WSL镜像文件..."
+            echo "  → 解压 $wsl_name..."
+            gzip -d -S .wsl -N "$wsl_name"
+            tar_name=$(ls -- *.wsl 2>/dev/null | head -1)
+
+            echo "📂 解包WSL镜像..."
+            mkdir -p ${temp_path}
+            tar -xf "${tar_name}" -C ${temp_path}
+            rm -rf "${tar_name}"
+            mv ${temp_path} "${tar_name}"
+
+            cd "${tar_name}"
+            echo "⚙️ 修改发行版配置..."
+            sed -i "s/^defaultName.*/defaultName = RockyLinux-$MAJOR_VERSION/" etc/wsl-distribution.conf
+            cp -P "Rocky/logo.ico" usr/share/pixmaps/fedora-logo.ico
+            cp -P "Rocky/bash-color-prompt.sh" etc/profile.d/bash-color-prompt.sh
+
+            echo "🛠️ 准备OOBE配置..."
+            mkdir -p "tmp/oobe"
+            cp -P "Rocky/10.1/oobe.sh" usr/libexec/wsl/oobe.sh
+            cp -rP "RPM_PATH/{01-update,02-base,03-epel,06-docker}" "tmp/oobe/"
+
+            echo "📦 重新打包镜像..."
+            tar --numeric-owner --format=posix -cf "/${tar_name}" -- *
+            CURRENT_DATE=$(date +"%Y%m%d")
+            NEW_FILENAME="${wsl_name%.wsl}-Docker-${CURRENT_DATE}"
+            echo "🗜️ 生成压缩镜像..."
+            echo "  → XZ格式压缩中..."
+            xz -9ckvT8 "/${tar_name}" > "${wsl_dir}/${NEW_FILENAME}.xz.wsl"
+            echo -e "\n✅ 处理完成!"
+          WSL_EOF
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            *.xz.wsl
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
       - name: Cleanup
+        shell: bash
         run: |
           echo "Cleaning up..."
-          wsl --unregister rocky
+          wsl --unregister RockyBuilder
+          ls -alh
