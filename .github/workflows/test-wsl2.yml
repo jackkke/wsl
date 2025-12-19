@@ -13,13 +13,13 @@ jobs:
       - name: Download Rocky rootfs
         run: |
           echo "Downloading Rocky rootfs..."
-          curl -L -o Rocky-10-WSL-Base-10.0-20250611.0.x86_64.wsl https://dl.rockylinux.org/pub/rocky/10/images/x86_64/Rocky-10-WSL-Base-10.0-20250611.0.x86_64.wsl
+          curl -L -o Rocky-10-WSL-Base.latest.x86_64.wsl https://dl.rockylinux.org/pub/rocky/10/images/x86_64/Rocky-10-WSL-Base.latest.x86_64.wsl
 
       - name: Import to WSL2
         run: |
           echo "Importing Rocky to WSL2..."
           mkdir rocky_base
-          wsl --install --from-file ./Rocky-10-WSL-Base-10.0-20250611.0.x86_64.wsl --no-launch
+          wsl --install --from-file ./Rocky-10-WSL-Base.latest.x86_64.wsl --no-launch
 
       - name: List installed WSL distributions
         run: wsl --list --verbose
