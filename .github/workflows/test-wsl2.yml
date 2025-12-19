@@ -21,10 +21,15 @@ jobs:
         shell: bash
         run: |
           BUILDER_FILE="${WSL_FILE%.wsl}-Builder.wsl"
-          cp "$WSL_FILE" "$BUILDER_FILE"
-          tar -xzf "$BUILDER_FILE" -k
-          sed -i "s/^read.*/username=zion/" usr/libexec/wsl/oobe.sh
-          tar --numeric-owner --format=posix -czf "$BUILDER_FILE" -h .
+          cp "${WSL_FILE}" "${BUILDER_FILE}"
+          gunzip -c "${BUILDER_FILE}" > builder.tar
+          tar -x -f builder.tar usr/libexec/wsl/oobe.sh
+          sed -i 's/^read.*/username=zion/' usr/libexec/wsl/oobe.sh
+          tar --delete -f builder.tar usr/libexec/wsl/oobe.sh
+          tar -rf builder.tar usr/libexec/wsl/oobe.sh
+          gzip -f builder.tar
+          mv builder.tar.gz "${BUILDER_FILE}"
+          rm -rf usr
           ls -alh
 
       - name: Import to WSL2 from wsl file
