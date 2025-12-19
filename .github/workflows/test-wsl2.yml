@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           BUILDER_FILE="${WSL_FILE%.wsl}-Builder.wsl"
-          wsl -d RockyBuilder -- bash -c '
+          wsl -d RockyBuilder -- bash -s <<'WSL_EOF'
             rpm_path="RPM_PATH"
             mkdir -p ${rpm_path}
 
@@ -89,7 +89,7 @@ jobs:
             echo "✅ Docker 相关下载完成"
 
             ls -alh
-          '
+          WSL_EOF
 
       - name: Cleanup
         run: |
