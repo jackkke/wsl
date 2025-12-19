@@ -39,7 +39,6 @@ jobs:
           mkdir RockyBuilder
           wsl --import RockyBuilder ./RockyBuilder ./${BUILDER_FILE} --version 2
           rm -rf ${BUILDER_FILE}
-          ls -alh
 
       - name: RockyBuilder Prapare Environment
         shell: bash
@@ -88,14 +87,14 @@ jobs:
             echo "⬇️ [6/6] 下载 Docker 相关 RPM 到 06-docker..."
             sudo dnf download -y --resolve --downloaddir=06-docker docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
             echo "✅ Docker 相关下载完成"
-
-            ls -alh
           WSL_EOF
 
       - name: Build Customize WSL Image
         shell: bash
         run: |
           wsl -d RockyBuilder -- bash -s <<'WSL_EOF'
+            pwd
+            ls -alh
             echo "🖥️ 检测系统架构和版本..."
             arch=$(uname -m)
             MAJOR_VERSION=$(rpm -q --qf '%{VERSION}' rocky-release | cut -d '.' -f 1)
@@ -134,8 +133,9 @@ jobs:
             NEW_FILENAME="${wsl_name%.wsl}-Docker-${CURRENT_DATE}"
             echo "🗜️ 生成压缩镜像..."
             echo "  → XZ格式压缩中..."
-            xz -9ckvT8 "/${tar_name}" > "${wsl_dir}/${NEW_FILENAME}.xz.wsl"
+            xz -9ckvT8 "/${tar_name}" > "${NEW_FILENAME}.xz.wsl"
             echo -e "\n✅ 处理完成!"
+            ls -alh
           WSL_EOF
 
       - name: Release
