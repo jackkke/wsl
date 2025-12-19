@@ -93,8 +93,6 @@ jobs:
         shell: bash
         run: |
           wsl -d RockyBuilder -- bash -s <<'WSL_EOF'
-            pwd
-            ls -alh
             echo "🖥️ 检测系统架构和版本..."
             arch=$(uname -m)
             MAJOR_VERSION=$(rpm -q --qf '%{VERSION}' rocky-release | cut -d '.' -f 1)
@@ -119,13 +117,13 @@ jobs:
             cd "${tar_name}"
             echo "⚙️ 修改发行版配置..."
             sed -i "s/^defaultName.*/defaultName = RockyLinux-$MAJOR_VERSION/" etc/wsl-distribution.conf
-            cp -P "Rocky/logo.ico" usr/share/pixmaps/fedora-logo.ico
-            cp -P "Rocky/bash-color-prompt.sh" etc/profile.d/bash-color-prompt.sh
+            cp -P "../Rocky/logo.ico" usr/share/pixmaps/fedora-logo.ico
+            cp -P "../Rocky/bash-color-prompt.sh" etc/profile.d/bash-color-prompt.sh
 
             echo "🛠️ 准备OOBE配置..."
             mkdir -p "tmp/oobe"
-            cp -P "Rocky/10.1/oobe.sh" usr/libexec/wsl/oobe.sh
-            cp -rP "RPM_PATH/{01-update,02-base,03-epel,06-docker}" "tmp/oobe/"
+            cp -P "../Rocky/10.1/oobe.sh" usr/libexec/wsl/oobe.sh
+            cp -rP "../RPM_PATH/{01-update,02-base,03-epel,06-docker}" "tmp/oobe/"
 
             echo "📦 重新打包镜像..."
             tar --numeric-owner --format=posix -cf "/${tar_name}" -- *
@@ -133,10 +131,15 @@ jobs:
             NEW_FILENAME="${wsl_name%.wsl}-Docker-${CURRENT_DATE}"
             echo "🗜️ 生成压缩镜像..."
             echo "  → XZ格式压缩中..."
-            xz -9ckvT8 "/${tar_name}" > "${NEW_FILENAME}.xz.wsl"
+            xz -9ckvT8 "/${tar_name}" > "../${NEW_FILENAME}.xz.wsl"
             echo -e "\n✅ 处理完成!"
-            ls -alh
           WSL_EOF
+
+      - name: Cleanup
+        shell: bash
+        run: |
+          ls -alh
+          wsl --unregister RockyBuilder
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -146,10 +149,3 @@ jobs:
             *.xz.wsl
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-
-      - name: Cleanup
-        shell: bash
-        run: |
-          echo "Cleaning up..."
-          wsl --unregister RockyBuilder
-          ls -alh
