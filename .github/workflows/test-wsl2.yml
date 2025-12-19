@@ -25,14 +25,15 @@ jobs:
         run: wsl --list --verbose
 
       - name: Run test commands inside WSL2
+        shell: bash
         run: |
-          echo "Running uname and OS info in WSL2 Alpine..."
-          wsl -d rocky -- bash -c @"
+          echo "Running uname and OS info in WSL2..."
+          wsl -d rocky -- bash -c '
             cat /etc/wsl.conf
+            ls -alh /mnt/d/a/wsl/wsl
             ls -alh /mnt/c
-            ls -alh /mnt/d
-          "@
+          '
       - name: Cleanup
         run: |
           echo "Cleaning up..."
-          wsl --unregister AlpineTest
+          wsl --unregister rocky
