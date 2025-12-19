@@ -8,31 +8,44 @@ on:
 jobs:
   test-wsl2-import:
     runs-on: windows-2025
+    env:
+      WSL_FILE: Rocky-10-WSL-Base-10.1-20251116.0.x86_64.wsl
 
     steps:
-      - name: Download Rocky rootfs
-        run: |
-          echo "Downloading Rocky rootfs..."
-          curl -L -o Rocky-10-WSL-Base.latest.x86_64.wsl https://dl.rockylinux.org/pub/rocky/10/images/x86_64/Rocky-10-WSL-Base.latest.x86_64.wsl
-
-      - name: Import to WSL2
-        run: |
-          echo "Importing Rocky to WSL2..."
-          mkdir rocky_base
-          wsl --install --from-file ./Rocky-10-WSL-Base.latest.x86_64.wsl --no-launch
-
-      - name: List installed WSL distributions
-        run: wsl --list --verbose
-
-      - name: Run test commands inside WSL2
+      - name: Download Rocky Linux WSL
         shell: bash
         run: |
-          echo "Running uname and OS info in WSL2..."
-          wsl -d rocky -- bash -c '
-            cat /etc/wsl.conf
-            ls -alh /mnt/d/a/wsl/wsl
-            ls -alh /mnt/c
-          '
+          curl -L -o ${WSL_FILE} https://dl.rockylinux.org/pub/rocky/10.1/images/x86_64/${WSL_FILE}
+
+      - name: Customize WSL rootfs
+        shell: bash
+        run: |
+          BUILDER_FILE="${WSL_FILE%.wsl}-Builder.wsl"
+          cp "$WSL_FILE" "$BUILDER_FILE"
+          tar -xzf "$BUILDER_FILE"
+          sed -i "s/^read.*/username=zion/" usr/libexec/wsl/oobe.sh
+          tar --numeric-owner --format=posix -czf "$BUILDER_FILE" .
+          ls -alh
+
+      - name: Import to WSL2 from wsl file
+        shell: bash
+        run: |
+          BUILDER_FILE="${WSL_FILE%.wsl}-Builder.wsl"
+          mkdir RockyBuilder
+          wsl --import RockyBuilder ./RockyBuilder ./${BUILDER_FILE} --version 2
+          ls -alh
+
+      - name: RockyBuilder Prapare Environment
+        shell: bash
+        run: |
+          BUILDER_FILE="${WSL_FILE%.wsl}-Builder.wsl"
+          echo "Preparing RockyBuilder environment..."
+          wsl -d RockyBuilder -- bash -c "
+            pwd
+            ls -alh
+            echo "${BUILDER_FILE}"
+          "
+
       - name: Cleanup
         run: |
           echo "Cleaning up..."
