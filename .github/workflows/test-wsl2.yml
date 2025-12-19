@@ -30,7 +30,6 @@ jobs:
           gzip -f builder.tar
           mv builder.tar.gz "${BUILDER_FILE}"
           rm -rf usr
-          ls -alh
 
       - name: Import to WSL2 from wsl file
         shell: bash
@@ -38,18 +37,59 @@ jobs:
           BUILDER_FILE="${WSL_FILE%.wsl}-Builder.wsl"
           mkdir RockyBuilder
           wsl --import RockyBuilder ./RockyBuilder ./${BUILDER_FILE} --version 2
+          rm -rf ${BUILDER_FILE}
           ls -alh
 
       - name: RockyBuilder Prapare Environment
         shell: bash
         run: |
           BUILDER_FILE="${WSL_FILE%.wsl}-Builder.wsl"
-          echo "Preparing RockyBuilder environment..."
-          wsl -d RockyBuilder -- bash -c "
-            pwd
+          wsl -d RockyBuilder -- bash -c '
+            rpm_path="RPM_PATH"
+            mkdir -p ${rpm_path}
+
+            echo "🔍 检测 RockyLinux 主版本号..."
+            MAJOR_VERSION=$(rpm -q --qf '%{VERSION}' rocky-release | cut -d '.' -f 1)
+            echo "📌 RockyLinux 主版本号: ${MAJOR_VERSION}"
+
+            echo "📦 安装 EPEL 仓库..."
+            sudo rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-"${MAJOR_VERSION}".noarch.rpm >/dev/null
+
+            echo "🔄 刷新 DNF 缓存..."
+            sudo dnf makecache >/dev/null
+
+            echo "📂 切换到 RPM 存放目录: ${rpm_path}"
+            cd "${rpm_path}"
+            mkdir -p 01-update 02-base 03-epel 06-docker
+
+            echo "⬇️ [1/6] 下载并更新系统 RPM 到 01-update..."
+            sudo dnf update -y --downloadonly --downloaddir=01-update >/dev/null
+            echo "✅ 系统更新 RPM 下载完成"
+
+            echo "📦 [2/6] 安装 01-update 中的 RPM..."
+            sudo dnf install -y --setopt=keepcache=1 01-update/*.rpm >/dev/null
+            echo "✅ 系统更新完成"
+
+            echo "⬇️ [3/6] 下载基础工具 RPM 到 02-base..."
+            sudo dnf download -y --resolve --downloaddir=02-base ncurses net-tools wget xz vim nano telnet python3-pip sysstat iotop bc dos2unix >/dev/null
+            echo "✅ 基础工具下载完成"
+
+            echo "⬇️ [4/6] 下载 EPEL 软件包到 03-epel..."
+            sudo dnf download -y --resolve --downloaddir=03-epel epel-release ncdu htop fastfetch p7zip >/dev/null
+            echo "✅ EPEL 软件包下载完成"
+
+            echo "🛠 添加 Docker 官方仓库..."
+            sudo dnf config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo >/dev/null
+
+            echo "📂 复制 docker-ce.repo 到 06-docker..."
+            sudo cp -p /etc/yum.repos.d/docker-ce.repo 06-docker/
+
+            echo "⬇️ [6/6] 下载 Docker 相关 RPM 到 06-docker..."
+            sudo dnf download -y --resolve --downloaddir=06-docker docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >/dev/null
+            echo "✅ Docker 相关下载完成"
+
             ls -alh
-            echo "${BUILDER_FILE}"
-          "
+          '
 
       - name: Cleanup
         run: |
