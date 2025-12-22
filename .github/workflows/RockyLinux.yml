@@ -3,7 +3,7 @@ name: Custom WSL
 on:
   workflow_dispatch:
   push:
-    tags: [ 'Rocky-*' ]
+    tags: [ 'RockyLinux-*' ]
 
 permissions:
   contents: write
