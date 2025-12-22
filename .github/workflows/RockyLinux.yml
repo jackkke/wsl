@@ -50,8 +50,6 @@ jobs:
         run: |
           BUILDER_FILE="${WSL_FILE%.wsl}-Builder.wsl"
           wsl -d RockyBuilder -- bash -s <<'WSL_EOF'
-            pwd
-            uname -a
             rpm_path="RPM_PATH"
             mkdir -p ${rpm_path}
 
@@ -120,7 +118,7 @@ jobs:
             tar -xf "${tar_name}" -C ${temp_path}
             rm -rf "${tar_name}"
             mv ${temp_path} "${tar_name}"
-            ls -alh
+
             cd "${tar_name}"
             echo "⚙️ 修改发行版配置..."
             sed -i "s/^defaultName.*/defaultName = RockyLinux-$MAJOR_VERSION/" etc/wsl-distribution.conf
@@ -145,7 +143,6 @@ jobs:
       - name: Cleanup
         shell: bash
         run: |
-          ls -alh
           wsl --unregister RockyBuilder
 
       - name: Release
