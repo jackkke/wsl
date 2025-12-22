@@ -1,9 +1,12 @@
-name: Test WSL2 on Windows 2025
+name: Custom WSL
 
 on:
   workflow_dispatch:
   push:
     tags: [ 'Rocky-*' ]
+
+permissions:
+  contents: write
 
 jobs:
   Build_Custom_RockyWSL:
