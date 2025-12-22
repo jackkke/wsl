@@ -15,7 +15,9 @@ jobs:
       WSL_FILE: Rocky-10-WSL-Base-10.1-20251116.0.x86_64.wsl
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
       - name: Download Rocky Linux WSL
         shell: bash
         run: |
