@@ -46,5 +46,16 @@ jobs:
         run: |
           BUILDER_FILE="${WSL_FILE%.wsl}-Builder.wsl"
           wsl -d RockyBuilder -- bash -s <<'WSL_EOF'
+            whoami
             echo $USER
+            echo "UID: $(id -u)"
           WSL_EOF
+          wsl -d RockyBuilder -- whoami
+          wsl -d RockyBuilder -- echo $USER
+          wsl -d RockyBuilder -- bash -c 'echo "用户: $USER"'
+          wsl -d RockyBuilder -- bash -c 'echo "UID: $(id -u)"'
+          wsl -d RockyBuilder -- sh -c 'echo "用户: $USER"'
+          wsl -d RockyBuilder --user zion -- whoami
+          wsl -d RockyBuilder --user zion -- bash -c 'echo "用户: $USER"'
+          wsl -d RockyBuilder --user root -- whoami
+          wsl -d RockyBuilder --user root -- bash -c 'echo "用户: $USER"'
