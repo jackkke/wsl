@@ -41,7 +41,7 @@ $username ALL=(ALL) NOPASSWD: ALL
 EOF
 
 MAJOR_VERSION=$(rpm -q --qf '%{VERSION}' rocky-release | cut -d '.' -f 1)
-echo "🌟 Start configuring Venus RockyLinux $MAJOR_VERSION"
+echo "🌟 Start configuring Custom RockyLinux $MAJOR_VERSION"
 log_file="/root/.install.log"
 echo '⚙️ Configuring DNF for faster downloads...'
 echo "max_parallel_downloads=10" >> /etc/dnf/dnf.conf
@@ -68,7 +68,7 @@ echo '🧹 Cleaning up...'
 dnf remove --oldinstallonly -y >> "$log_file" 2>&1
 dnf clean all >> "$log_file" 2>&1
 rm -rf /tmp/oobe
-echo "✅ Venus RockyLinux $MAJOR_VERSION configuration complete!"
+echo "✅ Custom RockyLinux $MAJOR_VERSION configuration complete!"
 
 echo 'Your user has been created, is included in the wheel group, and can use sudo without a password.'
 echo "To set a password for your user, run 'sudo passwd $username'"

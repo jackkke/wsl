@@ -1,4 +1,4 @@
-# see /usr/share/doc/bash-color-prompt/README.md
+# see /usr/share/doc/bash-color-prompt/README.md for more info
 
 ## to truncate \w dirpath set:
 # PROMPT_DIRTRIM=3
