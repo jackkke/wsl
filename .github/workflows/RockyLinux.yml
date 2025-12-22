@@ -82,31 +82,22 @@ jobs:
             echo "🖥️ 检测系统架构和版本..."
             MAJOR_VERSION=$(rpm -q --qf '%{VERSION}' rocky-release | cut -d '.' -f 1)
 
-            temp_path="temp_${RANDOM}"
-            wsl_name="$(ls *.wsl | head -1)"
-            echo "📄 使用镜像文件: $wsl_name"
-
             echo "📦 安装依赖工具..."
             dnf install -y xz
 
-            echo "🔧 处理WSL镜像文件..."
-            echo "  → 解压 $wsl_name..."
-            ls -alh
+            wsl_name="$(ls *.wsl | head -1)"
+
+            echo "  → 解压 $wsl_name 为 tar..."
             gzip -d -S .wsl -N "$wsl_name"
-            ls -alh
             rm -rf $wsl_name
-            ls -alh
-            tar_name="$(ls *.wsl | head -1)"
-            echo ${tar_name}
-            echo "📂 解包WSL镜像..."
+
+            echo "📂 解包 tar ${tar_name}..."
+            temp_path="temp_${RANDOM}"
             mkdir -p "${temp_path}"
-            ls -alh
+            tar_name="$(ls *.wsl | head -1)"
             tar -xf "${tar_name}" -C "${temp_path}"
-            ls -alh
             rm -rf "${tar_name}"
-            ls -alh
             mv "${temp_path}" "${tar_name}"
-            ls -alh
 
             cd "${tar_name}"
             echo "⚙️ 修改发行版配置..."
@@ -120,10 +111,9 @@ jobs:
             cp -rP ../RPM_PATH/{01-update,02-base,03-epel,06-docker} tmp/oobe/
 
             echo "📦 重新打包镜像..."
-            tar --numeric-owner --format=posix -cf "/${tar_name}" -- *
+            tar --numeric-owner --format=posix -cpf "/${tar_name}" -- .
             CURRENT_DATE="$(date +%Y%m%d)"
             NEW_FILENAME="${wsl_name%.wsl}-Docker-${CURRENT_DATE}"
-            echo "🗜️ 生成压缩镜像..."
             echo "  → XZ格式压缩中..."
             xz -9ckvT8 "/${tar_name}" > "../${NEW_FILENAME}.xz.wsl"
             echo -e "\n✅ 处理完成!"
