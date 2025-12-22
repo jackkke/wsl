@@ -16,8 +16,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
       - name: Download Rocky Linux WSL
         shell: bash
         run: |
@@ -42,7 +40,7 @@ jobs:
         run: |
           BUILDER_FILE="${WSL_FILE%.wsl}-Builder.wsl"
           mkdir RockyBuilder
-          wsl --import RockyBuilder ./RockyBuilder ./${BUILDER_FILE} --version 2
+          wsl --install --from-file ./${BUILDER_FILE} --location ./RockyBuilder --name RockyBuilder --no-launch --version 2
           rm -rf ${BUILDER_FILE}
 
       - name: RockyBuilder Prapare Environment
