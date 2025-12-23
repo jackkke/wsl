@@ -80,6 +80,8 @@ jobs:
         shell: bash
         run: |
           wsl -d RockyBuilder -- bash -s <<'WSL_EOF'
+            ORIGINAL_WIN_DIR="$(pwd)"
+            echo "原始 Windows 目录（WSL 视角）: $ORIGINAL_WIN_DIR"
             echo "🖥️ 检测系统架构和版本..."
             MAJOR_VERSION=$(rpm -q --qf '%{VERSION}' rocky-release | cut -d '.' -f 1)
 
@@ -87,8 +89,8 @@ jobs:
             dnf install -y xz
 
             wsl_name="$(ls *.wsl | head -1)"
-            mv "${wsl_name}" /root
-            mv Rocky /root
+            mv "${ORIGINAL_WIN_DIR}/${wsl_name}" /root
+            mv "${ORIGINAL_WIN_DIR}/Rocky" /root
             cd /root
             echo "  → 解压 $wsl_name 为 tar..."
             gzip -d -S .wsl -N "$wsl_name"
@@ -121,6 +123,7 @@ jobs:
             echo "  → XZ格式压缩中..."
             xz -9ckvT8 "/${tar_name}" > "../${NEW_FILENAME}.xz.wsl"
             echo -e "\n✅ 处理完成!"
+            mv *.xz.wsl "${ORIGINAL_WIN_DIR}/"
           WSL_EOF
 
       - name: Cleanup
