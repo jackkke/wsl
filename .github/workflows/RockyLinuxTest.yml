@@ -1,4 +1,4 @@
-name: Custom WSL
+name: Custom WSL Test
 
 on:
   workflow_dispatch:
@@ -38,15 +38,16 @@ jobs:
             dnf install -y xz
 
             wsl_name="$(ls *.wsl | head -1)"
-
+            mv "${wsl_name}" /root
+            cd /root
             echo "  → 解压 $wsl_name 为 tar..."
             gzip -d -S .wsl -N "$wsl_name"
             rm -rf $wsl_name
 
+            tar_name="$(ls *.wsl | head -1)"
             echo "📂 解包 tar ${tar_name}..."
             temp_path="temp_${RANDOM}"
             mkdir -p "${temp_path}"
-            tar_name="$(ls *.wsl | head -1)"
             tar -pxf "${tar_name}" -C "${temp_path}"
             rm -rf "${tar_name}"
             mv "${temp_path}" "${tar_name}"
