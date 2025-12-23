@@ -1,0 +1,79 @@
+name: Custom WSL
+
+on:
+  workflow_dispatch:
+  push:
+    tags: [ 'RockyLinuxTest-*' ]
+
+permissions:
+  contents: write
+
+jobs:
+  Build_Custom_RockyWSL:
+    runs-on: windows-2025
+    env:
+      WSL_FILE: Rocky-10-WSL-Base-10.1-20251116.0.x86_64.wsl
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download Rocky Linux WSL
+        shell: bash
+        run: |
+          curl -L -o ${WSL_FILE} https://dl.rockylinux.org/pub/rocky/10.1/images/x86_64/${WSL_FILE}
+
+      - name: Import to WSL2 from wsl file
+        shell: bash
+        run: |
+          mkdir RockyBuilder
+          wsl --install --from-file ./${WSL_FILE} --location ./RockyBuilder --name RockyBuilder --no-launch --version 2
+
+      - name: Build Customize WSL Image
+        shell: bash
+        run: |
+          wsl -d RockyBuilder -- bash -s <<'WSL_EOF'
+            echo "🖥️ 检测系统架构和版本..."
+            MAJOR_VERSION=$(rpm -q --qf '%{VERSION}' rocky-release | cut -d '.' -f 1)
+
+            echo "📦 安装依赖工具..."
+            dnf install -y xz
+
+            wsl_name="$(ls *.wsl | head -1)"
+
+            echo "  → 解压 $wsl_name 为 tar..."
+            gzip -d -S .wsl -N "$wsl_name"
+            rm -rf $wsl_name
+
+            echo "📂 解包 tar ${tar_name}..."
+            temp_path="temp_${RANDOM}"
+            mkdir -p "${temp_path}"
+            tar_name="$(ls *.wsl | head -1)"
+            tar -pxf "${tar_name}" -C "${temp_path}"
+            rm -rf "${tar_name}"
+            mv "${temp_path}" "${tar_name}"
+
+            cd "${tar_name}"
+            echo "⚙️ 修改发行版配置..."
+            sed -i "s/^defaultName.*/defaultName = RockyLinux-${MAJOR_VERSION}/" etc/wsl-distribution.conf
+            cp -P "../Rocky/logo.ico" usr/share/pixmaps/fedora-logo.ico
+            cp -P "../Rocky/bash-color-prompt.sh" etc/profile.d/bash-color-prompt.sh
+
+            echo "🛠️ 准备OOBE配置..."
+            mkdir -p tmp/oobe
+            cp -P "../Rocky/10.1/oobe.sh" usr/libexec/wsl/oobe.sh
+
+            ls -alh
+            echo "📦 重新打包镜像..."
+            tar --numeric-owner --format=posix -cpf "/${tar_name}" -- *
+            CURRENT_DATE="$(date +%Y%m%d)"
+            NEW_FILENAME="${wsl_name%.wsl}-Docker-${CURRENT_DATE}"
+            echo "  → XZ格式压缩中..."
+            xz -9ckvT8 "/${tar_name}" > "../${NEW_FILENAME}.xz.wsl"
+            echo -e "\n✅ 处理完成!"
+          WSL_EOF
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: |
+            *.xz.wsl
