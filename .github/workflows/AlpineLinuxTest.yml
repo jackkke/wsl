@@ -34,7 +34,7 @@ jobs:
             ORIGINAL_WIN_DIR="$(pwd)"
             echo "原始 Windows 目录（WSL 视角）: $ORIGINAL_WIN_DIR"
             echo "📦 安装依赖工具..."
-            dnf install -y xz
+            apk add xz gzip
 
             gz_name="$(ls *.gz | head -1)"
             mv "${ORIGINAL_WIN_DIR}/${gz_name}" /root
