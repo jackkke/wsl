@@ -86,7 +86,7 @@ jobs:
             mkdir -p usr/lib/wsl
             cp -aP ../Alpine/etc/. etc/
             cp -aP ../Alpine/usr/. usr/
-            cp -rP ../RPM_PATH/{01-update,02-base,03-extra,06-docker} tmp/oobe/
+            cp -rP ../RPM_PATH/* tmp/oobe/
 
             echo "📦 重新打包镜像..."
             tar --numeric-owner --format=posix -cpf "/${tar_name}" -- *
