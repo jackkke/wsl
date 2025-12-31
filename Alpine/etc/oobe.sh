@@ -34,6 +34,14 @@ cat > /etc/sudoers.d/wsluser << EOF
 $username ALL=(ALL) NOPASSWD: ALL
 EOF
 
+MAJOR_VERSION=$(cat /etc/alpine-release)
+echo "🌟 Start configuring Custom RockyLinux $MAJOR_VERSION"
+log_file="/root/.install.log"
+echo '🔄 Updating system packages...'
+apk add --allow-untrusted /tmp/oobe/01-update/*.apk >> "$log_file" 2>&1
+echo '📦 Installing base components...'
+apk add --allow-untrusted /tmp/oobe/02-base/*.apk >> "$log_file" 2>&1
+
 echo 'Your user has been created, is included in the wheel group, and can use sudo without a password.'
 echo "To set a password for your user, run 'sudo passwd $username'"
 echo "Note: Default password has been set to the username. Please change it for security."

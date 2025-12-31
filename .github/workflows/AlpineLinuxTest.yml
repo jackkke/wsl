@@ -27,6 +27,33 @@ jobs:
           mkdir AlpineBuilder
           wsl --import AlpineBuilder ./RockyBuilder ./${WSL_FILE} --version 2
 
+      - name: RockyBuilder Prapare Environment
+        shell: bash
+        run: |
+          wsl -d RockyBuilder -- bash -s <<'WSL_EOF'
+            cd /root
+            rpm_path="RPM_PATH"
+            mkdir -p ${rpm_path}
+            echo "🔄 刷新 APK 缓存并更新系统..."
+            apk update
+            apk upgrade -a  # -a 表示下载所有更新包但不安装
+
+            echo "📂 切换到 RPM 存放目录: ${rpm_path}"
+            cd "${rpm_path}"
+            mkdir -p 01-update 02-base 03-extra 04-docker
+
+            echo "⬇️ [1/4] 下载系统更新包到 01-update..."
+            apk fetch -L --update-cache -o 01-update/
+            echo "✅ 系统更新包准备完成"
+
+            echo "📦 [2/4] 安装系统更新..."
+            apk upgrade --no-cache
+            echo "✅ 系统更新完成"
+
+            echo "⬇️ 下载极简包到 02-base 目录..."
+            apk fetch -R -L -o 02-base busybox tar gzip sudo curl bash
+            echo "✅ 下载完成！"
+
       - name: Build Customize Alpine WSL Image
         shell: bash
         run: |
@@ -55,10 +82,12 @@ jobs:
 
             cd "${tar_name}"
             echo "⚙️ 修改发行版配置..."
-            mkdir etc/sudoers.d
+            mkdir -p tmp/oobe
+            mkdir -p etc/sudoers.d
             mkdir -p usr/lib/wsl
             cp -aP ../Alpine/etc/. etc/
             cp -aP ../Alpine/usr/. usr/
+            cp -rP ../RPM_PATH/{01-update,02-base,03-extra,06-docker} tmp/oobe/
 
             echo "📦 重新打包镜像..."
             tar --numeric-owner --format=posix -cpf "/${tar_name}" -- *
