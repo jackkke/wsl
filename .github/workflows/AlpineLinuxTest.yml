@@ -53,6 +53,7 @@ jobs:
             echo "⬇️ 下载极简包到 02-base 目录..."
             apk fetch -R -L -o 02-base busybox tar gzip sudo curl bash
             echo "✅ 下载完成！"
+          WSL_EOF
 
       - name: Build Customize Alpine WSL Image
         shell: bash
