@@ -5,6 +5,7 @@
 *.conf text eol=lf
 *.service text eol=lf
 *.repo text eol=lf
+*.json text eol=lf
 
 # 二进制文件
 *.ico binary
