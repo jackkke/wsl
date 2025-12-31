@@ -35,15 +35,13 @@ jobs:
             rpm_path="RPM_PATH"
             mkdir -p ${rpm_path}
             echo "🔄 刷新 APK 缓存并更新系统..."
-            apk update
-            apk upgrade -a  # -a 表示下载所有更新包但不安装
 
             echo "📂 切换到 RPM 存放目录: ${rpm_path}"
             cd "${rpm_path}"
-            mkdir -p 01-update 02-base 03-extra 04-docker
+            mkdir -p 01-update 02-base 03-extra 06-docker
 
             echo "⬇️ [1/4] 下载系统更新包到 01-update..."
-            apk fetch -L --update-cache -o 01-update/
+            apk update && apk fetch -o 01-update/
             echo "✅ 系统更新包准备完成"
 
             echo "📦 [2/4] 安装系统更新..."
@@ -51,7 +49,7 @@ jobs:
             echo "✅ 系统更新完成"
 
             echo "⬇️ 下载极简包到 02-base 目录..."
-            apk fetch -R -L -o 02-base busybox tar gzip sudo curl bash
+            apk fetch -R -o 02-base/ busybox tar gzip sudo curl bash
             echo "✅ 下载完成！"
           WSL_EOF
 
