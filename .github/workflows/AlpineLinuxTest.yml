@@ -27,12 +27,55 @@ jobs:
           mkdir AlpineBuilder
           wsl --import AlpineBuilder ./RockyBuilder ./${WSL_FILE} --version 2
 
-      - name: Test
+      - name: Build Customize Alpine WSL Image
         shell: bash
         run: |
-          wsl -l -v
           wsl -d AlpineBuilder -- sh -s <<'WSL_EOF'
-            pwd
-            id
-            uname -a
+            ORIGINAL_WIN_DIR="$(pwd)"
+            echo "原始 Windows 目录（WSL 视角）: $ORIGINAL_WIN_DIR"
+            echo "📦 安装依赖工具..."
+            dnf install -y xz
+
+            gz_name="$(ls *.gz | head -1)"
+            mv "${ORIGINAL_WIN_DIR}/${gz_name}" /root
+            mv "${ORIGINAL_WIN_DIR}/Alpine" /root
+
+            cd /root
+            echo "  → 解压 $gz_name 为 tar..."
+            gzip -d -S .tar -N "$gz_name"
+            rm -rf $gz_name
+
+            tar_name="$(ls *.tar | head -1)"
+            echo "📂 解包 tar ${tar_name}..."
+            temp_path="temp_${RANDOM}"
+            mkdir -p "${temp_path}"
+            tar -pxf "${tar_name}" -C "${temp_path}"
+            rm -rf "${tar_name}"
+            mv "${temp_path}" "${tar_name}"
+
+            cd "${tar_name}"
+            echo "⚙️ 修改发行版配置..."
+            mkdir etc/sudoers.d
+            mkdir -p usr/lib/wsl
+            cp -rP ../Alpine/etc etc
+            cp -rP ../Alpine/usr usr
+
+            echo "📦 重新打包镜像..."
+            tar --numeric-owner --format=posix -cpf "/${tar_name}" -- *
+            CURRENT_DATE="$(date +%Y%m%d)"
+            NEW_FILENAME="${gz_name%.tar.gz}-${CURRENT_DATE}"
+            echo "  → XZ格式压缩中..."
+            xz -9ckvT8 "/${tar_name}" > "../${NEW_FILENAME}.xz.wsl"
+            echo -e "\n✅ 处理完成!"
+            ls -alh
+            cd ../
+            ls -alh
+            mv *.xz.wsl "${ORIGINAL_WIN_DIR}/"
           WSL_EOF
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: |
+            *.xz.wsl
