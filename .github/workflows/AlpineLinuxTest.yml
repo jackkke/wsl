@@ -27,10 +27,10 @@ jobs:
           mkdir AlpineBuilder
           wsl --import AlpineBuilder ./RockyBuilder ./${WSL_FILE} --version 2
 
-      - name: RockyBuilder Prapare Environment
+      - name: AlpineBuilder Prapare Environment
         shell: bash
         run: |
-          wsl -d RockyBuilder -- bash -s <<'WSL_EOF'
+          wsl -d AlpineBuilder -- bash -s <<'WSL_EOF'
             cd /root
             rpm_path="RPM_PATH"
             mkdir -p ${rpm_path}
