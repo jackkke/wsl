@@ -35,12 +35,14 @@ $username ALL=(ALL) NOPASSWD: ALL
 EOF
 
 MAJOR_VERSION=$(cat /etc/alpine-release)
-echo "🌟 Start configuring Custom RockyLinux $MAJOR_VERSION"
+echo "🌟 Start configuring Custom AlpineLinux $MAJOR_VERSION"
 log_file="/root/.install.log"
 echo '🔄 Updating system packages...'
-find /tmp/oobe/01-update -name "*.apk" -exec apk add --allow-untrusted {} \; >> "$log_file" 2>&1
+find /tmp/oobe/01-update -name "*.apk" -exec apk add --no-network --allow-untrusted {} \; >> "$log_file" 2>&1
 echo '📦 Installing base components...'
-find /tmp/oobe/02-base -name "*.apk" -exec apk add --allow-untrusted {} \; >> "$log_file" 2>&1
+find /tmp/oobe/02-base -name "*.apk" -exec apk add --no-network --allow-untrusted {} \; >> "$log_file" 2>&1
+rm -rf /tmp/oobe
+echo "✅ Custom AlpineLinux $MAJOR_VERSION configuration complete!"
 
 echo 'Your user has been created, is included in the wheel group, and can use sudo without a password.'
 echo "To set a password for your user, run 'sudo passwd $username'"
