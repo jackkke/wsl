@@ -30,7 +30,7 @@ jobs:
       - name: AlpineBuilder Prapare Environment
         shell: bash
         run: |
-          wsl -d AlpineBuilder -- bash -s <<'WSL_EOF'
+          wsl -d AlpineBuilder -- sh -s <<'WSL_EOF'
             cd /root
             rpm_path="RPM_PATH"
             mkdir -p ${rpm_path}
