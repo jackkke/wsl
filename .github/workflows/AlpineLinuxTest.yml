@@ -41,7 +41,7 @@ jobs:
             mkdir -p 01-update 02-base 03-extra 06-docker
 
             echo "⬇️ [1/4] 下载系统更新包到 01-update..."
-            apk update && apk fetch -o 01-update/
+            apk update && apk upgrade --download-only --cache-dir 01-update
             echo "✅ 系统更新包准备完成"
 
             echo "📦 [2/4] 安装系统更新..."
@@ -50,6 +50,7 @@ jobs:
 
             echo "⬇️ 下载极简包到 02-base 目录..."
             apk fetch -R -o 02-base/ busybox tar gzip sudo curl bash bash-completion
+            printf "%s\n" busybox tar gzip sudo curl bash bash-completion > 02-base/pkg.list
             echo "✅ 下载完成！"
           WSL_EOF
 

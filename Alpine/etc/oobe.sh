@@ -37,10 +37,11 @@ EOF
 MAJOR_VERSION=$(cat /etc/alpine-release)
 echo "🌟 Start configuring Custom AlpineLinux $MAJOR_VERSION"
 log_file="/root/.install.log"
+oobe_path="/tmp/oobe"
 echo '🔄 Updating system packages...'
-find /tmp/oobe/01-update -name "*.apk" -exec apk add --no-network --allow-untrusted {} \; >> "$log_file" 2>&1
+apk upgrade --no-network --cache-dir $oobe_path/01-update >> "$log_file" 2>&1
 echo '📦 Installing base components...'
-find /tmp/oobe/02-base -name "*.apk" -exec apk add --no-network --allow-untrusted {} \; >> "$log_file" 2>&1
+apk add --no-network --cache-dir $oobe_path/02-base $(cat $oobe_path/02-base/pkg.list) >> "$log_file" 2>&1
 rm -rf /tmp/oobe
 echo "✅ Custom AlpineLinux $MAJOR_VERSION configuration complete!"
 
