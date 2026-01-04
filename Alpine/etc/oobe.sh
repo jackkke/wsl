@@ -42,6 +42,8 @@ echo '🔄 Updating system packages...'
 apk add --no-network --allow-untrusted $oobe_path/01-update/*.apk >> "$log_file" 2>&1
 echo '📦 Installing base components...'
 apk add --no-network --allow-untrusted $oobe_path/02-base/*.apk >> "$log_file" 2>&1
+echo '📦 Installing docker components...'
+apk add --no-network --allow-untrusted $oobe_path/06-docker/*.apk >> "$log_file" 2>&1
 rm -rf $oobe_path
 echo "✅ Custom AlpineLinux $MAJOR_VERSION configuration complete!"
 
