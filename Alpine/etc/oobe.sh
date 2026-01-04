@@ -39,10 +39,10 @@ echo "🌟 Start configuring Custom AlpineLinux $MAJOR_VERSION"
 log_file="/root/.install.log"
 oobe_path="/tmp/oobe"
 echo '🔄 Updating system packages...'
-apk add --no-network --allow-untrusted 01-update/*.apk >> "$log_file" 2>&1
+apk add --no-network --allow-untrusted $oobe_path/01-update/*.apk >> "$log_file" 2>&1
 echo '📦 Installing base components...'
-apk add --no-network --allow-untrusted 02-base/*.apk >> "$log_file" 2>&1
-rm -rf /tmp/oobe
+apk add --no-network --allow-untrusted $oobe_path/02-base/*.apk >> "$log_file" 2>&1
+rm -rf $oobe_path
 echo "✅ Custom AlpineLinux $MAJOR_VERSION configuration complete!"
 
 echo 'Your user has been created, is included in the wheel group, and can use sudo without a password.'
