@@ -45,6 +45,7 @@ apk add --no-network --allow-untrusted $oobe_path/02-base/*.apk >> "$log_file" 2
 echo '📦 Installing docker components...'
 apk add --no-network --allow-untrusted $oobe_path/06-docker/*.apk >> "$log_file" 2>&1
 rm -rf $oobe_path
+addgroup $username docker
 openrc -n default
 setup-interfaces -a
 service docker start
