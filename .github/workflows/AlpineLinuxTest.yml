@@ -12,7 +12,7 @@ jobs:
   Build_Custom_RockyWSL:
     runs-on: windows-2025
     env:
-      WSL_FILE: alpine-minirootfs-3.23.2-x86_64.tar.gz
+      WSL_FILE: alpine-minirootfs-3.23.0-x86_64.tar.gz
 
     steps:
       - uses: actions/checkout@v6
@@ -50,7 +50,6 @@ jobs:
 
             echo "⬇️ 下载极简包到 02-base 目录..."
             apk fetch -R -o 02-base/ busybox tar gzip sudo curl bash bash-completion
-            printf "%s\n" busybox tar gzip sudo curl bash bash-completion > 02-base/pkg.list
             echo "✅ 下载完成！"
           WSL_EOF
 
