@@ -30,7 +30,7 @@ jobs:
       - name: Download Rocky Linux WSL
         shell: bash
         run: |
-          curl -L0 "https://dl.rockylinux.org/pub/rocky/$MAJOR_MINOR/images/x86_64/$WSL_FILE"
+          curl -LO "https://dl.rockylinux.org/pub/rocky/$MAJOR_MINOR/images/x86_64/$WSL_FILE"
 
       - name: Import to WSL2 from wsl file
         shell: bash
