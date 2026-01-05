@@ -1,4 +1,4 @@
-name: Custom Alpine Test WSL
+name: Custom WSL2 AlpineLinux
 
 on:
   push:
@@ -10,8 +10,6 @@ permissions:
 jobs:
   Build_Custom_RockyWSL:
     runs-on: windows-2025
-    env:
-      WSL_FILE: alpine-minirootfs-3.23.0-x86_64.tar.gz
 
     steps:
       - uses: actions/checkout@v6
@@ -37,7 +35,7 @@ jobs:
         shell: bash
         run: |
           mkdir AlpineBuilder
-          wsl --import AlpineBuilder ./RockyBuilder ./${WSL_FILE} --version 2
+          wsl --import AlpineBuilder ./AlpineBuilder ./${WSL_FILE} --version 2
 
       - name: AlpineBuilder Prapare Environment
         shell: bash
@@ -106,7 +104,7 @@ jobs:
 
             echo "📦 重新打包镜像..."
             tar --numeric-owner --format=posix -cpf "/${tar_name}" -- *
-            NEW_FILENAME="${gz_name%.tar.gz}-$2"
+            NEW_FILENAME="${gz_name%.tar.gz}-Docker-$2"
             echo "  → XZ格式压缩中..."
             xz -9ckvT8 "/${tar_name}" > "../${NEW_FILENAME}.xz.wsl"
             echo -e "\n✅ 处理完成!"

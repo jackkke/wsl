@@ -38,8 +38,12 @@ MAJOR_VERSION=$(cat /etc/alpine-release)
 echo "🌟 Start configuring Custom AlpineLinux $MAJOR_VERSION"
 log_file="/root/.install.log"
 oobe_path="/tmp/oobe"
-echo '🔄 Updating system packages...'
-apk add --no-network --allow-untrusted $oobe_path/01-update/*.apk >> "$log_file" 2>&1
+if ls $oobe_path/01-update/*.apk >/dev/null 2>&1; then
+  echo '🔄 Updating system packages...'
+  apk add --no-network --allow-untrusted $oobe_path/01-update/*.apk >> "$log_file" 2>&1
+else
+  echo '⚠️ No update APKs found, skipping.'
+fi
 echo '📦 Installing base components...'
 apk add --no-network --allow-untrusted $oobe_path/02-base/*.apk >> "$log_file" 2>&1
 echo '📦 Installing docker components...'
