@@ -47,15 +47,15 @@ echo '⚙️ Configuring DNF for faster downloads...'
 echo "max_parallel_downloads=10" >> /etc/dnf/dnf.conf
 chmod 644 /etc/profile.d/bash-color-prompt.sh
 echo '🔄 Updating system packages...'
-dnf install -y /tmp/oobe/01-update/*.rpm --disablerepo=\* --nogpgcheck >> "$log_file" 2>&1
+dnf install -y /etc/oobe/01-update/*.rpm --disablerepo=\* --nogpgcheck >> "$log_file" 2>&1
 echo '📦 Installing base components...'
-dnf install -y /tmp/oobe/02-base/*.rpm --disablerepo=\* --nogpgcheck >> "$log_file" 2>&1
+dnf install -y /etc/oobe/02-base/*.rpm --disablerepo=\* --nogpgcheck >> "$log_file" 2>&1
 echo '📡 Installing EPEL repository and base packages...'
-dnf install -y /tmp/oobe/03-epel/*.rpm --disablerepo=\* --nogpgcheck >> "$log_file" 2>&1
-if [ -d /tmp/oobe/06-docker ]; then
+dnf install -y /etc/oobe/03-epel/*.rpm --disablerepo=\* --nogpgcheck >> "$log_file" 2>&1
+if [ -d /etc/oobe/06-docker ]; then
     echo '🐳 Installing Docker...'
-    mv /tmp/oobe/06-docker/docker-ce.repo /etc/yum.repos.d/docker-ce.repo
-    dnf install -y /tmp/oobe/06-docker/*.rpm --disablerepo=\* --nogpgcheck >> "$log_file" 2>&1
+    mv /etc/oobe/06-docker/docker-ce.repo /etc/yum.repos.d/docker-ce.repo
+    dnf install -y /etc/oobe/06-docker/*.rpm --disablerepo=\* --nogpgcheck >> "$log_file" 2>&1
     echo '🛠️ Configuring Docker daemon...'
     mkdir -p /etc/docker
     echo '{}' > /etc/docker/daemon.json
@@ -67,7 +67,7 @@ fi
 echo '🧹 Cleaning up...'
 dnf remove --oldinstallonly -y >> "$log_file" 2>&1
 dnf clean all >> "$log_file" 2>&1
-rm -rf /tmp/oobe
+rm -rf /etc/oobe
 echo "✅ Custom RockyLinux $MAJOR_VERSION configuration complete!"
 
 echo 'Your user has been created, is included in the wheel group, and can use sudo without a password.'
