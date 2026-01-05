@@ -42,8 +42,7 @@ jobs:
       - name: AlpineBuilder Prapare Environment
         shell: bash
         run: |
-          wsl -d AlpineBuilder --env WSL_FILE=$WSL_FILE -- sh -s <<'WSL_EOF'
-            echo "WSL_FILE is ${WSL_FILE}"
+          wsl -d AlpineBuilder -- sh -s <<'WSL_EOF'
             cd /root
             rpm_path="RPM_PATH"
             mkdir -p ${rpm_path}
@@ -73,13 +72,13 @@ jobs:
       - name: Build Customize Alpine WSL Image
         shell: bash
         run: |
-          wsl -d AlpineBuilder -- sh -s <<'WSL_EOF'
+          wsl -d AlpineBuilder -- sh -s "$WSL_FILE" "$CUSTOM_VERSION" <<'WSL_EOF'
             ORIGINAL_WIN_DIR="$(pwd)"
             echo "原始 Windows 目录（WSL 视角）: $ORIGINAL_WIN_DIR"
             echo "📦 安装依赖工具..."
             apk add xz gzip tar
 
-            gz_name="$(ls *.gz | head -1)"
+            gz_name="$1"
             mv "${ORIGINAL_WIN_DIR}/${gz_name}" /root
             mv "${ORIGINAL_WIN_DIR}/Alpine" /root
 
@@ -103,12 +102,11 @@ jobs:
             mkdir -p usr/lib/wsl
             cp -aP ../Alpine/etc/. etc/
             cp -aP ../Alpine/usr/. usr/
-            # cp -rP ../RPM_PATH/* tmp/oobe/
+            cp -rP ../RPM_PATH/* tmp/oobe/
 
             echo "📦 重新打包镜像..."
             tar --numeric-owner --format=posix -cpf "/${tar_name}" -- *
-            CURRENT_DATE="$(date +%Y%m%d)"
-            NEW_FILENAME="${gz_name%.tar.gz}-${CURRENT_DATE}"
+            NEW_FILENAME="${gz_name%.tar.gz}-$2"
             echo "  → XZ格式压缩中..."
             xz -9ckvT8 "/${tar_name}" > "../${NEW_FILENAME}.xz.wsl"
             echo -e "\n✅ 处理完成!"
