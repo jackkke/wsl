@@ -51,9 +51,9 @@ apk add --no-network --allow-untrusted $oobe_path/06-docker/*.apk >> "$log_file"
 rm -rf $oobe_path
 addgroup $username docker
 openrc -n default
-setup-interfaces -a
-rc-update add networking default
-service docker start
+rc-service networkmanager start
+rc-update add networkmanager default
+rc-service docker start
 rc-update add docker default
 echo "✅ Custom AlpineLinux $MAJOR_VERSION configuration complete!"
 

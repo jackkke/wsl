@@ -59,7 +59,7 @@ jobs:
             echo "✅ 系统更新完成"
 
             echo "⬇️ 下载极简包到 02-base 目录..."
-            apk fetch -R -o 02-base/ alpine-conf tzdata tar gzip sudo curl bash bash-completion apk-tools-bash-completion glib-bash-completion
+            apk fetch -R -o 02-base/ networkmanager networkmanager-openrc alpine-conf tzdata tar gzip sudo curl bash bash-completion apk-tools-bash-completion glib-bash-completion
             echo "✅ 下载完成！"
 
             echo "⬇️ 下载 Docker 包到 06-docker 目录..."
