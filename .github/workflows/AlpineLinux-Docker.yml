@@ -2,7 +2,7 @@ name: Custom WSL2 AlpineLinux And Docker
 
 on:
   push:
-    tags: [ 'AlpineDockerTest-*.*.*-*' ]
+    tags: [ 'AlpineDocker-*.*.*-*' ]
 
 permissions:
   contents: write

@@ -2,7 +2,7 @@ name: Custom WSL2 AlpineLinux
 
 on:
   push:
-    tags: [ 'AlpineTest-*.*.*-*' ]
+    tags: [ 'Alpine-*.*.*-*' ]
 
 permissions:
   contents: write
