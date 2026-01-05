@@ -1,9 +1,8 @@
 name: Custom Alpine Test WSL
 
 on:
-  workflow_dispatch:
   push:
-    tags: [ 'AlpineTest-*' ]
+    tags: [ 'AlpineTest-*.*.*-*' ]
 
 permissions:
   contents: write
@@ -16,10 +15,23 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+      - name: inspect tag info
+        id: parse_tag
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $parts = $tag.Split('-')
+          $base_version   = $parts[1]
+          $custom_version = $parts[2]
+          $major_minor    = 'v' + ($base_version.Split('.')[0..1] -join '.')
+          $filename       = "alpine-minirootfs-$base_version-x86_64.tar.gz"
+          "BASE_VERSION=$base_version" >> $env:GITHUB_ENV
+          "CUSTOM_VERSION=$custom_version" >> $env:GITHUB_ENV
+          "MAJOR_MINOR=$major_minor" >> $env:GITHUB_ENV
+          "WSL_FILE=$filename" >> $env:GITHUB_ENV
       - name: Download Alpine Linux WSL
         shell: bash
         run: |
-          curl -L -o ${WSL_FILE} https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/x86_64/${WSL_FILE}
+          curl -LO "https://dl-cdn.alpinelinux.org/alpine/$MAJOR_MINOR/releases/x86_64/$WSL_FILE"
 
       - name: Import to WSL2 from tar.gz file
         shell: bash
@@ -30,7 +42,8 @@ jobs:
       - name: AlpineBuilder Prapare Environment
         shell: bash
         run: |
-          wsl -d AlpineBuilder -- sh -s <<'WSL_EOF'
+          wsl -d AlpineBuilder --env WSL_FILE=$WSL_FILE -- sh -s <<'WSL_EOF'
+            echo "WSL_FILE is ${WSL_FILE}"
             cd /root
             rpm_path="RPM_PATH"
             mkdir -p ${rpm_path}
@@ -90,7 +103,7 @@ jobs:
             mkdir -p usr/lib/wsl
             cp -aP ../Alpine/etc/. etc/
             cp -aP ../Alpine/usr/. usr/
-            cp -rP ../RPM_PATH/* tmp/oobe/
+            # cp -rP ../RPM_PATH/* tmp/oobe/
 
             echo "📦 重新打包镜像..."
             tar --numeric-owner --format=posix -cpf "/${tar_name}" -- *
