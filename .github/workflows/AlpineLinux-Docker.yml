@@ -1,8 +1,8 @@
-name: Custom WSL2 AlpineLinux
+name: Custom WSL2 AlpineLinux And Docker
 
 on:
   push:
-    tags: [ 'AlpineTest-*.*.*-*' ]
+    tags: [ 'AlpineDockerTest-*.*.*-*' ]
 
 permissions:
   contents: write
@@ -50,12 +50,12 @@ jobs:
             cd "${rpm_path}"
             mkdir -p 01-update 02-base 03-extra 06-docker
 
-            echo "⬇️ [1/4] 下载系统更新包到 01-update..."
+            echo "⬇️ 下载系统更新包到 01-update..."
             apk update && apk list -u -q | xargs apk fetch -R -o 01-update
             echo "✅ 系统更新包准备完成"
 
             echo "📦 [2/4] 安装系统更新..."
-            apk upgrade --no-cache
+            apk upgrade
             echo "✅ 系统更新完成"
 
             echo "⬇️ 下载极简包到 02-base 目录..."
@@ -95,12 +95,13 @@ jobs:
 
             cd "${tar_name}"
             echo "⚙️ 修改发行版配置..."
-            mkdir -p tmp/oobe
+            mkdir -p etc/oobe
             mkdir -p etc/sudoers.d
             mkdir -p usr/lib/wsl
             cp -aP ../Alpine/etc/. etc/
+            mv etc/oobe-docker.sh etc/oobe.sh
             cp -aP ../Alpine/usr/. usr/
-            cp -rP ../RPM_PATH/* tmp/oobe/
+            cp -rP ../RPM_PATH/* etc/oobe/
 
             echo "📦 重新打包镜像..."
             tar --numeric-owner --format=posix -cpf "/${tar_name}" -- *

@@ -1,0 +1,119 @@
+name: Custom WSL2 AlpineLinux
+
+on:
+  push:
+    tags: [ 'AlpineTest-*.*.*-*' ]
+
+permissions:
+  contents: write
+
+jobs:
+  Build_Custom_RockyWSL:
+    runs-on: windows-2025
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: inspect tag info
+        id: parse_tag
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $parts = $tag.Split('-')
+          $base_version   = $parts[1]
+          $custom_version = $parts[2]
+          $major_minor    = 'v' + ($base_version.Split('.')[0..1] -join '.')
+          $filename       = "alpine-minirootfs-$base_version-x86_64.tar.gz"
+          "BASE_VERSION=$base_version" >> $env:GITHUB_ENV
+          "CUSTOM_VERSION=$custom_version" >> $env:GITHUB_ENV
+          "MAJOR_MINOR=$major_minor" >> $env:GITHUB_ENV
+          "WSL_FILE=$filename" >> $env:GITHUB_ENV
+      - name: Download Alpine Linux WSL
+        shell: bash
+        run: |
+          curl -LO "https://dl-cdn.alpinelinux.org/alpine/$MAJOR_MINOR/releases/x86_64/$WSL_FILE"
+
+      - name: Import to WSL2 from tar.gz file
+        shell: bash
+        run: |
+          mkdir AlpineBuilder
+          wsl --import AlpineBuilder ./AlpineBuilder ./${WSL_FILE} --version 2
+
+      - name: AlpineBuilder Prapare Environment
+        shell: bash
+        run: |
+          wsl -d AlpineBuilder -- sh -s <<'WSL_EOF'
+            cd /root
+            rpm_path="RPM_PATH"
+            mkdir -p ${rpm_path}
+            echo "🔄 刷新 APK 缓存并更新系统..."
+
+            echo "📂 切换到 RPM 存放目录: ${rpm_path}"
+            cd "${rpm_path}"
+            mkdir -p 01-update 02-base
+
+            echo "⬇️ 下载系统更新包到 01-update..."
+            apk update && apk list -u -q | xargs apk fetch -R -o 01-update
+            echo "✅ 系统更新包准备完成"
+
+            echo "📦 [2/4] 安装系统更新..."
+            apk upgrade
+            echo "✅ 系统更新完成"
+
+            echo "⬇️ 下载极简包到 02-base 目录..."
+            apk fetch -R -o 02-base/ apk add --no-cache alpine-base apk-tools apk-tools-bash-completion bash bash-completion ca-certificates coreutils curl iproute2 less libapk nano networkmanager networkmanager-openrc procps sudo tzdata
+            echo "✅ 下载完成！"
+          WSL_EOF
+
+      - name: Build Customize Alpine WSL Image
+        shell: bash
+        run: |
+          wsl -d AlpineBuilder -- sh -s "$WSL_FILE" "$CUSTOM_VERSION" <<'WSL_EOF'
+            ORIGINAL_WIN_DIR="$(pwd)"
+            echo "原始 Windows 目录（WSL 视角）: $ORIGINAL_WIN_DIR"
+            echo "📦 安装依赖工具..."
+            apk add xz gzip tar
+
+            gz_name="$1"
+            mv "${ORIGINAL_WIN_DIR}/${gz_name}" /root
+            mv "${ORIGINAL_WIN_DIR}/Alpine" /root
+
+            cd /root
+            echo "  → 解压 $gz_name 为 tar..."
+            gzip -d -S .tar -N "$gz_name"
+            rm -rf $gz_name
+
+            tar_name="$(ls *.tar | head -1)"
+            echo "📂 解包 tar ${tar_name}..."
+            temp_path="temp_${RANDOM}"
+            mkdir -p "${temp_path}"
+            tar -pxf "${tar_name}" -C "${temp_path}"
+            rm -rf "${tar_name}"
+            mv "${temp_path}" "${tar_name}"
+
+            cd "${tar_name}"
+            echo "⚙️ 修改发行版配置..."
+            mkdir -p etc/oobe
+            mkdir -p etc/sudoers.d
+            mkdir -p usr/lib/wsl
+            cp -aP ../Alpine/etc/. etc/
+            rm -rf etc/oobe-docker.sh
+            cp -aP ../Alpine/usr/. usr/
+            cp -rP ../RPM_PATH/* etc/oobe/
+
+            echo "📦 重新打包镜像..."
+            tar --numeric-owner --format=posix -cpf "/${tar_name}" -- *
+            NEW_FILENAME="${gz_name%.tar.gz}-$2"
+            echo "  → XZ格式压缩中..."
+            xz -9ckvT8 "/${tar_name}" > "../${NEW_FILENAME}.xz.wsl"
+            echo -e "\n✅ 处理完成!"
+            ls -alh
+            cd ../
+            ls -alh
+            mv *.xz.wsl "${ORIGINAL_WIN_DIR}/"
+          WSL_EOF
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: |
+            *.xz.wsl
