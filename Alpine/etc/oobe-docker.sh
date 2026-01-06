@@ -52,6 +52,8 @@ echo '📦 Installing docker components...'
 apk add --no-network --allow-untrusted $oobe_path/06-docker/*.apk >> "$log_file" 2>&1
 rm -rf $oobe_path
 sed -i 's#/bin/sh#/bin/bash#' /etc/passwd
+dircolors -p > /etc/DIR_COLORS
+mv /etc/profile.d/color_prompt.sh.disabled /etc/profile.d/color_prompt.sh
 addgroup $username docker >> "$log_file" 2>&1
 openrc -n default >> "$log_file" 2>&1
 rc-service networkmanager start >> "$log_file" 2>&1
