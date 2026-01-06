@@ -59,7 +59,7 @@ jobs:
             echo "✅ 系统更新完成"
 
             echo "⬇️ 下载极简包到 02-base 目录..."
-            apk fetch -R -o 02-base/ alpine-base apk-tools apk-tools-bash-completion bash bash-completion ca-certificates coreutils curl iproute2 less libapk nano networkmanager networkmanager-openrc procps sudo tzdata
+            apk add -s alpine-base apk-tools apk-tools-bash-completion bash bash-completion ca-certificates coreutils curl grep iproute2 less libapk nano ncurses networkmanager networkmanager-openrc procps shadow sudo tzdata | awk '/Installing/ {print $3}' | xargs apk fetch -o 02-base/
             echo "✅ 下载完成！"
           WSL_EOF
 
