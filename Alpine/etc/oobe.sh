@@ -23,7 +23,9 @@ fi
 read -r -p 'Enter new UNIX username: ' username
 
 # Create the user
-adduser -D -u $DEFAULT_USER_ID -G wheel "$username"
+addgroup -S "$username"
+adduser -D -u $DEFAULT_USER_ID -G "$username" "$username"
+addgroup "$username" wheel
 
 cat > /etc/sudoers.d/wsluser << EOF
 # Ensure the WSL initial user can use sudo without a password.
