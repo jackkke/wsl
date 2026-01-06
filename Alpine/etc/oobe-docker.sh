@@ -51,12 +51,13 @@ apk add --no-network --allow-untrusted $oobe_path/02-base/*.apk >> "$log_file" 2
 echo '📦 Installing docker components...'
 apk add --no-network --allow-untrusted $oobe_path/06-docker/*.apk >> "$log_file" 2>&1
 rm -rf $oobe_path
-addgroup $username docker
-openrc -n default
-rc-service networkmanager start
-rc-update add networkmanager default
-rc-service docker start
-rc-update add docker default
+sed -i 's#/bin/sh#/bin/bash#' /etc/passwd
+addgroup $username docker >> "$log_file" 2>&1
+openrc -n default >> "$log_file" 2>&1
+rc-service networkmanager start >> "$log_file" 2>&1
+rc-update add networkmanager default >> "$log_file" 2>&1
+rc-service docker start >> "$log_file" 2>&1
+rc-update add docker default >> "$log_file" 2>&1
 echo "✅ Custom AlpineLinux $MAJOR_VERSION configuration complete!"
 
 echo 'Your user has been created, is included in the wheel group, and can use sudo without a password.'

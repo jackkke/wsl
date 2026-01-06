@@ -49,6 +49,7 @@ fi
 echo '📦 Installing base components...'
 apk add --no-network --allow-untrusted $oobe_path/02-base/*.apk >> "$log_file" 2>&1
 rm -rf $oobe_path
+sed -i 's#/bin/sh#/bin/bash#' /etc/passwd
 openrc -n default >> "$log_file" 2>&1
 rc-service networkmanager start >> "$log_file" 2>&1
 rc-update add networkmanager default >> "$log_file" 2>&1
